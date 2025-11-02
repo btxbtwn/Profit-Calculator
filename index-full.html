@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Profit Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      /* Dark theme (default) */
+      --bg-dark: #0a0e13;
+      --bg-gradient-start: #0b0f14;
+      --bg-gradient-end: #151a23;
+      --card-bg: rgba(18, 24, 32, 0.6);
+      --card-border: rgba(75, 179, 253, 0.15);
+      --muted: #77818f;
+      --text: #eaf0f6;
+      --accent: #4bb3fd;
+      --accent-glow: rgba(75, 179, 253, 0.3);
+      --ok: #39d98a;
+      --ok-glow: rgba(57, 217, 138, 0.2);
+      --warn: #efaa2e;
+      --warn-glow: rgba(239, 170, 46, 0.2);
+      --input-bg: rgba(15, 20, 27, 0.8);
+      --input-border: #243041;
+      --input-focus: #4bb3fd;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Light theme */
+    [data-theme="light"] {
+      --bg-gradient-start: #f5f7fa;
+      --bg-gradient-end: #e8ecf1;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(37, 99, 235, 0.15);
+      --muted: #666666;
+      --text: #1a1f2e;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.2);
+      --ok: #22c55e;
+      --ok-glow: rgba(34, 197, 94, 0.2);
+      --warn: #f59e0b;
+      --warn-glow: rgba(245, 158, 11, 0.2);
+      --input-bg: rgba(255, 255, 255, 0.95);
+      --input-border: #d0d8e0;
+      --input-focus: #2563eb;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    [data-theme="light"] body::before {
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      background-size: 200% 200%;
+      animation: gradient-shift 15s ease infinite;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 24px;
+      position: relative;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(75, 179, 253, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fade-in 0.6s ease-out;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fade-in 0.8s ease-out;
+      position: relative;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 10px 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .theme-toggle:hover {
+      background: var(--input-bg);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md), 0 0 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .theme-icon {
+      font-size: 18px;
+      line-height: 1;
+      transition: transform 0.3s ease;
+    }
+
+    .theme-toggle:hover .theme-icon {
+      transform: rotate(20deg);
+    }
+
+    h1 {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent) 0%, #6dd5ed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      animation: fade-in 0.6s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .card:hover {
+      border-color: rgba(75, 179, 253, 0.3);
+      box-shadow: var(--shadow-lg), 0 0 40px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--accent), #6dd5ed);
+      border-radius: 2px;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
+      background: rgba(15, 20, 27, 0.95);
+    }
+
+    input[type="number"]:hover,
+    select:hover {
+      border-color: rgba(75, 179, 253, 0.4);
+    }
+
+    input[type="number"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: rgba(15, 20, 27, 0.4);
+      border-color: rgba(119, 129, 143, 0.2);
+    }
+
+    input[type="number"]:disabled:hover {
+      border-color: rgba(119, 129, 143, 0.2);
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+    [data-theme="dark"] select,
+    body:not([data-theme]) select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234bb3fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    [data-theme="light"] select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      text-align: right;
+      padding: 14px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(18, 24, 32, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    th:first-child {
+      text-align: left;
+      border-top-left-radius: 10px;
+    }
+
+    th:last-child {
+      border-top-right-radius: 10px;
+    }
+
+    td {
+      text-align: right;
+      padding: 16px 12px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(36, 48, 65, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(75, 179, 253, 0.05);
+    }
+
+    tbody tr:hover td {
+      border-bottom-color: rgba(75, 179, 253, 0.2);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 500;
+    }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .warn {
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(75, 179, 253, 0.15);
+      border: 1px solid rgba(75, 179, 253, 0.3);
+      color: var(--accent);
+      margin: 0 4px;
+    }
+
+    .table-note {
+      margin-top: 16px;
+      padding: 14px;
+      background: rgba(75, 179, 253, 0.05);
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      border: 1px solid rgba(75, 179, 253, 0.1);
+    }
+
+    .fee-table-card {
+      animation-delay: 0.2s;
+    }
+
+    .platform-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .platform-name::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .cell-with-arrows {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .cell-value {
+      min-width: 50px;
+      text-align: right;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .cell-value:hover {
+      background: rgba(75, 179, 253, 0.1);
+    }
+
+    .arrow-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .arrow-btn {
+      width: 20px;
+      height: 16px;
+      border: 1px solid rgba(75, 179, 253, 0.3);
+      background: rgba(15, 20, 27, 0.8);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--accent);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .arrow-btn:hover {
+      background: rgba(75, 179, 253, 0.15);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .arrow-btn:active {
+      transform: scale(0.95);
+      background: rgba(75, 179, 253, 0.25);
+    }
+
+    .fee-select {
+      width: 100%;
+      padding: 6px 28px 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      appearance: none;
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .fee-select,
+    body:not([data-theme]) .fee-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234bb3fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    [data-theme="light"] .fee-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    .fee-select:hover {
+      border-color: rgba(75, 179, 253, 0.4);
+      background-color: rgba(15, 20, 27, 0.95);
+    }
+
+    .fee-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .updating {
+      animation: pulse 0.5s ease-in-out;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 16px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 10px 8px;
+      }
+
+      .theme-toggle {
+        position: relative;
+        margin: 0 auto 20px;
+        display: inline-flex;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+        <span id="themeLabel">Dark</span>
+      </button>
+      <h1>Profit Calculator</h1>
+      <p class="subtitle">
+        Calculate optimal pricing across multiple resale platforms. See required prices and net profits with platform-specific fees instantly.
+      </p>
+    </header>
+
+    <div class="main-grid">
+      <div class="card">
+        <h2 class="card-title">Input Parameters</h2>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="cogs">Cost of Goods</label>
+            <input id="cogs" type="number" step="0.01" value="1.25" />
+          </div>
+          <div class="input-group">
+            <label for="material">Material Cost</label>
+            <input id="material" type="number" step="0.01" value="0.95" />
+          </div>
+          <div class="input-group">
+            <label for="ship">Shipping Cost (seller)</label>
+            <input id="ship" type="number" step="0.01" value="6.00" />
+          </div>
+          <div class="input-group">
+            <label for="target">Target Profit</label>
+            <input id="target" type="number" step="0.01" value="5.00" />
+          </div>
+          <div class="input-group">
+            <label for="markup">Markup Percentage (%)</label>
+            <input id="markup" type="number" step="1" value="50" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Pricing Results</h2>
+        <table id="results">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Required Price</th>
+              <th>List (Markup)</th>
+              <th>Fees @ List</th>
+              <th>Net Profit @ List</th>
+              <th class="muted">Assumptions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-note">
+          <span class="badge">.99 rounding</span> Etsy, eBay • 
+          <span class="badge">Whole dollars</span> Depop, Poshmark, Mercari • 
+          Poshmark uses under $15 flat $2.95 vs 20% at $15+.
+        </div>
+      </div>
+    </div>
+
+    <div class="card fee-table-card">
+      <h2 class="card-title">Platform Fee Table</h2>
+      <p class="small muted" style="margin-bottom: 16px;">✏️ Click any cell to edit • Changes update results instantly</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Fee %</th>
+            <th>Promo %</th>
+            <th>Flat Fee $</th>
+            <th>Seller Pays Ship?</th>
+            <th>Default Rounding</th>
+          </tr>
+        </thead>
+        <tbody id="feeRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentTheme = 'dark';
+
+    function initTheme() {
+      setTheme(currentTheme);
+    }
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.body.setAttribute('data-theme', theme);
+      const icon = document.getElementById('themeIcon');
+      const label = document.getElementById('themeLabel');
+      
+      if (theme === 'light') {
+        icon.textContent = '☀️';
+        label.textContent = 'Light';
+      } else {
+        icon.textContent = '🌙';
+        label.textContent = 'Dark';
+      }
+    }
+
+    function toggleTheme() {
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    }
+
+    initTheme();
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    const PLATFORMS = [
+      { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, flatFee: 0.45, sellerPaysShip: true,  rounding: '.99' },
+      { name: 'eBay',     feePct: 0.136, promoPct: 0.12, flatFee: 0.30, sellerPaysShip: true,  rounding: '.99' },
+      { name: 'Depop',    feePct: 0.033, promoPct: 0.08, flatFee: 0.45, sellerPaysShip: false, rounding: 'whole' },
+      { name: 'Poshmark', feePct: 0.20,  promoPct: 0.00, flatFee: 2.95, sellerPaysShip: false, rounding: 'whole' },
+      { name: 'Mercari',  feePct: 0.10,  promoPct: 0.00, flatFee: 0.00, sellerPaysShip: false, rounding: 'whole' },
+    ];
+
+    const ceilDot99 = (x) => Math.max(0.99, Math.ceil(x) - 0.01);
+    const ceilWhole  = (x) => Math.ceil(x);
+    const money = (n) => '$' + Number(n).toFixed(2);
+
+    function getRoundingFor(platformName) {
+      const def = PLATFORMS.find(p => p.name === platformName)?.rounding || 'whole';
+      return def === '.99' ? ceilDot99 : ceilWhole;
+    }
+
+    function requiredPriceGeneric(costBaseNoFee, feePct, promoPct, flatFee) {
+      const rate = feePct + promoPct;
+      const denom = 1 - rate;
+      return (costBaseNoFee + flatFee) / Math.max(1e-9, denom);
+    }
+
+    function requiredPricePosh(costBaseNoFee, roundingFn) {
+      const rawA = costBaseNoFee + 2.95;
+      const rA = roundingFn(rawA);
+      const validA = rA < 15;
+
+      const rawB = costBaseNoFee / (1 - 0.20);
+      const rB = roundingFn(rawB);
+      const validB = rB >= 15;
+
+      if (validA && validB) {
+        return Math.min(rA, rB);
+      } else if (validA) {
+        return rA;
+      } else if (validB) {
+        return rB;
+      } else {
+        return 15;
+      }
+    }
+
+    function feesAtList(platform, listPrice) {
+      if (platform.name === 'Poshmark') {
+        if (listPrice < 15) return 2.95;
+        return listPrice * 0.20;
+      }
+      return listPrice * (platform.feePct + platform.promoPct) + platform.flatFee;
+    }
+
+    function compute() {
+      const cogs     = parseFloat(document.getElementById('cogs').value) || 0;
+      const material = parseFloat(document.getElementById('material').value) || 0;
+      const ship     = parseFloat(document.getElementById('ship').value) || 0;
+      const target   = parseFloat(document.getElementById('target').value) || 0;
+      const markupPct = parseFloat(document.getElementById('markup').value) || 0;
+      const markup   = 1 + (markupPct / 100);
+
+      const tbody = document.querySelector('#results tbody');
+      tbody.classList.add('updating');
+
+      setTimeout(() => {
+        tbody.innerHTML = '';
+
+        PLATFORMS.forEach((p, index) => {
+          const roundingFn = getRoundingFor(p.name);
+          const costBaseNoFee = target + cogs + material + (p.sellerPaysShip ? ship : 0);
+
+          let requiredRounded;
+          if (p.name === 'Poshmark') {
+            requiredRounded = requiredPricePosh(costBaseNoFee, roundingFn);
+          } else {
+            const requiredRaw = requiredPriceGeneric(costBaseNoFee, p.feePct, p.promoPct, p.flatFee);
+            requiredRounded = roundingFn(requiredRaw);
+          }
+
+          const listRounded = roundingFn(requiredRounded * markup);
+          const feeAtList = feesAtList(p, listRounded);
+          const shipCostAtList = p.sellerPaysShip ? ship : 0;
+          const netAtList = listRounded - feeAtList - shipCostAtList - cogs - material;
+
+          const tr = document.createElement('tr');
+          tr.style.animationDelay = `${index * 0.05}s`;
+          tr.innerHTML = `
+            <td><span class="platform-name">${p.name}</span></td>
+            <td class="mono">${money(requiredRounded)}</td>
+            <td class="mono">${money(listRounded)}</td>
+            <td class="mono">${money(feeAtList)}</td>
+            <td class="mono ${netAtList >= target ? 'ok' : 'warn'}">${money(netAtList)}</td>
+            <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        tbody.classList.remove('updating');
+      }, 100);
+    }
+
+    function renderFees() {
+      const feeBody = document.getElementById('feeRows');
+      feeBody.innerHTML = '';
+      PLATFORMS.forEach((p, index) => {
+        const tr = document.createElement('tr');
+        
+        const tdName = document.createElement('td');
+        tdName.innerHTML = `<span class="platform-name">${p.name}</span>`;
+        tr.appendChild(tdName);
+        
+        const tdFee = document.createElement('td');
+        tdFee.innerHTML = `
+          <div class="cell-with-arrows">
+            <span class="cell-value" contenteditable="true" data-platform="${index}" data-field="feePct">${(p.feePct * 100).toFixed(1)}</span>
+            <div class="arrow-buttons">
+              <button class="arrow-btn" data-platform="${index}" data-field="feePct" data-direction="up">▲</button>
+              <button class="arrow-btn" data-platform="${index}" data-field="feePct" data-direction="down">▼</button>
+            </div>
+          </div>
+        `;
+        tr.appendChild(tdFee);
+        
+        const tdPromo = document.createElement('td');
+        tdPromo.innerHTML = `
+          <div class="cell-with-arrows">
+            <span class="cell-value" contenteditable="true" data-platform="${index}" data-field="promoPct">${(p.promoPct * 100).toFixed(1)}</span>
+            <div class="arrow-buttons">
+              <button class="arrow-btn" data-platform="${index}" data-field="promoPct" data-direction="up">▲</button>
+              <button class="arrow-btn" data-platform="${index}" data-field="promoPct" data-direction="down">▼</button>
+            </div>
+          </div>
+        `;
+        tr.appendChild(tdPromo);
+        
+        const tdFlat = document.createElement('td');
+        tdFlat.innerHTML = `
+          <div class="cell-with-arrows">
+            <span class="cell-value" contenteditable="true" data-platform="${index}" data-field="flatFee">${p.flatFee.toFixed(2)}</span>
+            <div class="arrow-buttons">
+              <button class="arrow-btn" data-platform="${index}" data-field="flatFee" data-direction="up">▲</button>
+              <button class="arrow-btn" data-platform="${index}" data-field="flatFee" data-direction="down">▼</button>
+            </div>
+          </div>
+        `;
+        tr.appendChild(tdFlat);
+        
+        const tdShip = document.createElement('td');
+        tdShip.innerHTML = `
+          <select class="fee-select" data-platform="${index}" data-field="sellerPaysShip">
+            <option value="yes" ${p.sellerPaysShip ? 'selected' : ''}>Yes</option>
+            <option value="no" ${!p.sellerPaysShip ? 'selected' : ''}>No</option>
+          </select>
+        `;
+        tr.appendChild(tdShip);
+        
+        const tdRounding = document.createElement('td');
+        tdRounding.innerHTML = `
+          <select class="fee-select" data-platform="${index}" data-field="rounding">
+            <option value=".99" ${p.rounding === '.99' ? 'selected' : ''}>.99</option>
+            <option value="whole" ${p.rounding === 'whole' ? 'selected' : ''}>Whole</option>
+          </select>
+        `;
+        tr.appendChild(tdRounding);
+        
+        feeBody.appendChild(tr);
+      });
+      attachEditListeners();
+    }
+
+    function attachEditListeners() {
+      const editableCells = document.querySelectorAll('.cell-value');
+      editableCells.forEach(cell => {
+        cell.addEventListener('blur', handleCellEdit);
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            cell.blur();
+          }
+        });
+      });
+      
+      const arrowButtons = document.querySelectorAll('.arrow-btn');
+      arrowButtons.forEach(btn => {
+        btn.addEventListener('click', handleArrowClick);
+      });
+      
+      const selects = document.querySelectorAll('.fee-select');
+      selects.forEach(select => {
+        select.addEventListener('change', handleSelectChange);
+      });
+    }
+
+    function handleCellEdit(e) {
+      const cell = e.target;
+      const platformIdx = parseInt(cell.dataset.platform);
+      const field = cell.dataset.field;
+      const value = cell.textContent.trim();
+      
+      const platform = PLATFORMS[platformIdx];
+      
+      try {
+        if (field === 'feePct' || field === 'promoPct') {
+          const numVal = parseFloat(value);
+          if (isNaN(numVal) || numVal < 0 || numVal > 100) {
+            throw new Error('Invalid percentage');
+          }
+          platform[field] = numVal / 100;
+          cell.textContent = numVal.toFixed(1);
+        } else if (field === 'flatFee') {
+          const numVal = parseFloat(value);
+          if (isNaN(numVal) || numVal < 0) {
+            throw new Error('Invalid fee');
+          }
+          platform[field] = numVal;
+          cell.textContent = numVal.toFixed(2);
+        }
+        
+        compute();
+      } catch (err) {
+        renderFees();
+      }
+    }
+    
+    function handleArrowClick(e) {
+      e.preventDefault();
+      const btn = e.currentTarget;
+      const platformIdx = parseInt(btn.dataset.platform);
+      const field = btn.dataset.field;
+      const direction = btn.dataset.direction;
+      
+      const platform = PLATFORMS[platformIdx];
+      
+      if (field === 'feePct' || field === 'promoPct') {
+        const increment = 0.005;
+        const currentVal = platform[field];
+        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = Math.max(0, Math.min(1, newVal));
+        platform[field] = newVal;
+      } else if (field === 'flatFee') {
+        const increment = 0.05;
+        const currentVal = platform[field];
+        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = Math.max(0, newVal);
+        platform[field] = newVal;
+      }
+      
+      renderFees();
+      compute();
+    }
+    
+    function handleSelectChange(e) {
+      const select = e.target;
+      const platformIdx = parseInt(select.dataset.platform);
+      const field = select.dataset.field;
+      const value = select.value;
+      
+      const platform = PLATFORMS[platformIdx];
+      
+      if (field === 'sellerPaysShip') {
+        platform[field] = value === 'yes';
+      } else if (field === 'rounding') {
+        platform[field] = value;
+      }
+      
+      compute();
+    }
+
+    let debounceTimer;
+    function debounceCompute() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(compute, 150);
+    }
+
+    let debounceAvgCompTimer;
+    function debounceAvgComp() {
+      clearTimeout(debounceAvgCompTimer);
+      debounceAvgCompTimer = setTimeout(handleAvgCompChange, 150);
+    }
+    
+    const inputs = ['cogs', 'material', 'ship', 'target', 'markup'];
+    inputs.forEach(id => {
+      const element = document.getElementById(id);
+      element.addEventListener('input', debounceCompute);
+    });
+
+    renderFees();
+    compute();
+  </script>
+</body>
+</html>
