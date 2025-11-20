@@ -590,6 +590,25 @@
 
     <div class="main-grid">
       <div class="card">
+        <!-- FEATURE: Copy Button (Moved Here) -->
+        <div style="margin-bottom: 20px; text-align: center;">
+          <button onclick="copySummary()" style="
+            width: 100%;
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'" 
+            onmouseout="this.style.transform='translateY(0)'">
+            📋 Copy Vendoo Notes
+          </button>
+        </div>
+
         <h2 class="card-title">Input Parameters</h2>
         <div class="input-grid">
           <div class="input-group">
@@ -617,26 +636,6 @@
 
       <div class="card">
         <h2 class="card-title">Pricing Results</h2>
-        
-        <!-- FEATURE: Copy Button -->
-        <div style="margin-bottom: 20px; text-align: center;">
-          <button onclick="copySummary()" style="
-            width: 100%;
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 12px 24px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s ease;
-          " onmouseover="this.style.transform='translateY(-2px)'" 
-            onmouseout="this.style.transform='translateY(0)'">
-            📋 Copy Vendoo Notes
-          </button>
-        </div>
-
         <table id="results">
           <thead>
             <tr>
