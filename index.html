@@ -303,6 +303,17 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     }
 
+    .fee-select:hover {
+      border-color: rgba(75, 179, 253, 0.4);
+      background-color: rgba(15, 20, 27, 0.95);
+    }
+
+    .fee-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
     table {
       width: 100%;
       border-collapse: separate;
@@ -508,17 +519,6 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     }
 
-    .fee-select:hover {
-      border-color: rgba(75, 179, 253, 0.4);
-      background-color: rgba(15, 20, 27, 0.95);
-    }
-
-    .fee-select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-glow);
-    }
-
     @keyframes pulse {
       0%, 100% {
         opacity: 1;
@@ -617,7 +617,26 @@
 
       <div class="card">
         <h2 class="card-title">Pricing Results</h2>
-        <table id="results">
+        
+    <!-- FEATURE: Copy to Vendoo Button -->
+    <div style="margin: 20px 0; text-align: center;">
+      <button onclick="copySummary()" style="
+        background: var(--accent); 
+        color: white; 
+        border: none; 
+        padding: 12px 24px; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+      " onmouseover="this.style.transform='translateY(-2px)'" 
+        onmouseout="this.style.transform='translateY(0)'">
+        📋 Copy Vendoo Notes
+      </button>
+    </div>
+
+    <table id="results">
           <thead>
             <tr>
               <th>Platform</th>
@@ -973,6 +992,62 @@
 
     renderFees();
     compute();
+  
+    // --- FEATURE: Copy Summary for Vendoo ---
+    function copySummary() {
+      const cost = document.getElementById('cogs').value || 0;
+      const target = document.getElementById('target').value || 0;
+
+      // Grab the first two rows (usually eBay and Poshmark)
+      const rows = document.querySelectorAll('#results tbody tr');
+      if (rows.length < 2) {
+        alert("Please allow the prices to calculate first.");
+        return;
+      }
+
+      // Column indices: 0=Name, 1=Required, 2=List, 3=Fee, 4=Net
+      const ebayList = rows[0].cells[2].innerText;
+      const poshList = rows[1].cells[2].innerText;
+
+      // Format: "T: [Target] | Cost: [Cost] | eBay: [Price] | Posh: [Price]"
+      const summary = `Target: $${target} | Cost: $${cost} | eBay: ${ebayList} | Posh: ${poshList}`;
+
+      navigator.clipboard.writeText(summary).then(() => {
+        const btn = document.querySelector('button[onclick="copySummary()"]');
+        const originalText = btn.innerText;
+        btn.innerText = "✅ Copied!";
+        setTimeout(() => btn.innerText = originalText, 1500);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+
+    // --- FEATURE: Persistent Settings (Auto-Save) ---
+    const saveFields = ['cogs', 'material', 'ship', 'target', 'markup'];
+
+    // Load saved values on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      saveFields.forEach(id => {
+        const savedValue = localStorage.getItem('vendoo_calc_' + id);
+        if (savedValue) {
+          const el = document.getElementById(id);
+          if (el) el.value = savedValue;
+        }
+      });
+      // Force re-compute with loaded values
+      if (typeof compute === 'function') compute();
+    });
+
+    // Save values on input
+    saveFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', (e) => {
+          localStorage.setItem('vendoo_calc_' + id, e.target.value);
+        });
+      }
+    });
+
   </script>
 </body>
 </html>
