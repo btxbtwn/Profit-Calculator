@@ -1,1 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Profit Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg-dark: #0a0e13;
+      --bg-gradient-start: #0b0f14;
+      --bg-gradient-end: #151a23;
+      --card-bg: rgba(18, 24, 32, 0.6);
+      --card-border: rgba(75, 179, 253, 0.15);
+      --muted: #77818f;
+      --text: #eaf0f6;
+      --accent: #4bb3fd;
+      --accent-glow: rgba(75, 179, 253, 0.3);
+      --ok: #39d98a;
+      --warn: #efaa2e;
+      --input-bg: rgba(15, 20, 27, 0.8);
+      --input-border: #243041;
+      --input-focus: #4bb3fd;
+      --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      --bg-gradient-start: #f5f7fa;
+      --bg-gradient-end: #e8ecf1;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(37, 99, 235, 0.15);
+      --muted: #666666;
+      --text: #1a1f2e;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.2);
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --input-bg: rgba(255, 255, 255, 0.95);
+      --input-border: #d0d8e0;
+      --input-focus: #2563eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 30px; }
+    h1 { 
+      font-size: 32px; 
+      background: linear-gradient(to right, var(--accent), #6dd5ed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title { font-size: 18px; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .card-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+
+    /* --- 1. COPY BUTTON STYLES --- */
+    .copy-container { margin-bottom: 20px; }
+    .copy-btn {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform 0.1s;
+      font-size: 15px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    .copy-btn:hover { transform: translateY(-2px); }
+    .copy-btn:active { transform: translateY(0); }
+
+    /* INPUTS */
+    .input-grid { display: grid; gap: 12px; }
+    .input-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .input-group input {
+      width: 100%; padding: 10px;
+      background: var(--input-bg); border: 1px solid var(--input-border);
+      color: var(--text); border-radius: 8px; font-size: 15px;
+    }
+    .input-group input:focus { outline: none; border-color: var(--input-focus); box-shadow: 0 0 0 2px var(--accent-glow); }
+    
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: right; color: var(--muted); font-size: 12px; padding: 10px; border-bottom: 1px solid var(--card-border); }
+    th:first-child { text-align: left; }
+    td { text-align: right; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; font-size: 14px; }
+    td:first-child { text-align: left; font-family: sans-serif; font-weight: 600; }
+    
+    .ok { color: var(--ok); } 
+    .warn { color: var(--warn); }
+    
+    /* THEME TOGGLE */
+    .theme-toggle { position: absolute; top: 20px; right: 20px; background: none; border: 1px solid var(--card-border); padding: 8px; border-radius: 8px; color: var(--text); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+  
+  <header>
+    <h1>Profit Calculator</h1>
+    <p style="color: var(--muted)">Optimize pricing across Vendoo platforms</p>
+  </header>
+
+  <div class="main-grid">
+    
+    <!-- LEFT COLUMN: INPUTS -->
+    <div class="card">
+      
+      <!-- COPY BUTTON (Visibly Above Inputs) -->
+      <div class="copy-container">
+        <button class="copy-btn" onclick="copySummary()">
+          📋 Copy Vendoo Notes
+        </button>
+      </div>
+
+      <h2 class="card-title">Settings</h2>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Cost of Goods ($)</label>
+          <input type="number" id="cogs" value="1.25" step="0.01">
+        </div>
+        <div class="input-group">
+          <label>Material Cost ($)</label>
+          <input type="number" id="material" value="0.95" step="0.01">
+        </div>
+        <div class="input-group">
+          <label>Shipping (Seller Pays) ($)</label>
+          <input type="number" id="ship" value="6.00" step="0.01">
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 8px 0;">
+
+        <div class="input-group">
+          <label style="color: var(--accent); font-weight: bold;">Target Profit Goal ($)</label>
+          <input type="number" id="target" value="25.00" step="0.50">
+        </div>
+        <div class="input-group" style="margin-top: 12px;">
+          <label>Markup Buffer (%)</label>
+          <input type="number" id="markup" value="20" step="5">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: RESULTS -->
+    <div class="card">
+      <h2 class="card-title">Results</h2>
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>List Price</th>
+            <th>Fees</th>
+            <th>Net Profit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--card-border);">
+        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--muted);">Fee Assumptions (Click to Edit)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Plat</th>
+              <th>Fee%</th>
+              <th>Flat</th>
+              <th>Ship?</th>
+            </tr>
+          </thead>
+          <tbody id="feeTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- CONFIG ---
+  const PLATFORMS = [
+    { name: 'Etsy', fee: 0.095, flat: 0.45, ship: true, round: '.99' },
+    { name: 'eBay', fee: 0.136, flat: 0.30, ship: true, round: '.99' },
+    { name: 'Depop', fee: 0.033, flat: 0.45, ship: false, round: 'whole' },
+    { name: 'Posh', fee: 0.20, flat: 2.95, ship: false, round: 'whole' },
+    { name: 'Mercari', fee: 0.10, flat: 0.00, ship: false, round: 'whole' }
+  ];
+
+  // --- CORE FUNCTIONS ---
+  function compute() {
+    const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+    const mat = parseFloat(document.getElementById('material').value) || 0;
+    const ship = parseFloat(document.getElementById('ship').value) || 0;
+    
+    const tbody = document.querySelector('#resultsTable tbody');
+    tbody.innerHTML = '';
+
+    PLATFORMS.forEach(p => {
+      let listPrice = 0;
+      let netProfit = 0;
+      let status = 'ok';
+
+      // Calculate List Price needed to hit Target
+      const target = parseFloat(document.getElementById('target').value) || 0;
+      const markup = 1 + ((parseFloat(document.getElementById('markup').value) || 0) / 100);
+      
+      const costBase = target + cogs + mat + (p.ship ? ship : 0);
+      let required = 0;
+
+      // Poshmark Logic
+      if (p.name === 'Posh') {
+         // Complex Poshmark reverse math simplified for stability
+         required = (costBase + 2.95) < 15 ? (costBase + 2.95) : (costBase / 0.8);
+      } else {
+         required = (costBase + p.flat) / (1 - p.fee);
+      }
+      
+      listPrice = roundPrice(required * markup, p.round);
+      const fees = calcFees(p, listPrice);
+      netProfit = listPrice - fees - cogs - mat - (p.ship ? ship : 0);
+      status = netProfit >= target ? 'ok' : 'warn';
+
+      // Render Row
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${p.name}</td>
+        <td>$${listPrice.toFixed(2)}</td>
+        <td style="color: var(--muted)">$${calcFees(p, listPrice).toFixed(2)}</td>
+        <td class="${status}" style="font-weight:bold">$${netProfit.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function calcFees(p, price) {
+    if (p.name === 'Posh') {
+      if (price < 15) return 2.95;
+      return price * 0.20;
+    }
+    return (price * p.fee) + p.flat;
+  }
+
+  function roundPrice(price, type) {
+    if (type === '.99') return Math.ceil(price) - 0.01;
+    return Math.ceil(price);
+  }
+
+  function copySummary() {
+    const cogs = document.getElementById('cogs').value;
+    const material = document.getElementById('material').value;
+    const ship = document.getElementById('ship').value;
+    const target = document.getElementById('target').value;
+    const markup = document.getElementById('markup').value;
+
+    // New Format: Cost | Material | Ship | Target | Buffer
+    const text = `Cost: $${cogs} | Mat: $${material} | Ship: $${ship} | Target: $${target} | Buffer: ${markup}%`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.innerText = "✅ Copied!";
+      setTimeout(() => btn.innerText = "📋 Copy Vendoo Notes", 1500);
+    });
+  }
+
+  // --- INIT ---
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', compute));
+  
+  // Render Fee Table
+  const feeBody = document.getElementById('feeTable');
+  PLATFORMS.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.name}</td>
+      <td contenteditable="true" onblur="updateFee(${i}, 'fee', this.innerText)">${(p.fee*100).toFixed(1)}%</td>
+      <td contenteditable="true" onblur="updateFee(${i}, 'flat', this.innerText)">$${p.flat}</td>
+      <td onclick="toggleShip(${i})" style="cursor:pointer">${p.ship ? '✅' : '❌'}</td>
+    `;
+    feeBody.appendChild(tr);
+  });
+
+  window.updateFee = (i, key, val) => {
+    val = parseFloat(val.replace('%','').replace('$',''));
+    if (key === 'fee') val = val / 100;
+    PLATFORMS[i][key] = val;
+    compute();
+  }
+  window.toggleShip = (i) => {
+    PLATFORMS[i].ship = !PLATFORMS[i].ship;
+    // Re-render symbol
+    document.getElementById('feeTable').rows[i].cells[3].innerText = PLATFORMS[i].ship ? '✅' : '❌';
+    compute();
+  }
+
+  // Theme Logic
+  const btnTheme = document.getElementById('themeToggle');
+  let theme = 'dark';
+  btnTheme.onclick = () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', theme);
+    btnTheme.innerText = theme === 'dark' ? '🌙' : '☀️';
+  };
+
+  compute();
+</script>
+</body>
+</html>
 
