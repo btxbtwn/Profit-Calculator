@@ -17,6 +17,7 @@
       --accent-glow: rgba(75, 179, 253, 0.3);
       --ok: #39d98a;
       --warn: #efaa2e;
+      --danger: #ff4d4d;
       --input-bg: rgba(15, 20, 27, 0.8);
       --input-border: #243041;
       --input-focus: #4bb3fd;
@@ -34,6 +35,7 @@
       --accent-glow: rgba(37, 99, 235, 0.2);
       --ok: #22c55e;
       --warn: #f59e0b;
+      --danger: #dc2626;
       --input-bg: rgba(255, 255, 255, 0.95);
       --input-border: #d0d8e0;
       --input-focus: #2563eb;
@@ -80,7 +82,7 @@
     .card-title { font-size: 18px; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
     .card-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
 
-    /* --- 1. COPY BUTTON STYLES --- */
+    /* COPY BUTTON */
     .copy-container { margin-bottom: 20px; }
     .copy-btn {
       width: 100%;
@@ -118,6 +120,7 @@
     
     .ok { color: var(--ok); } 
     .warn { color: var(--warn); }
+    .danger { color: var(--danger); }
     
     /* THEME TOGGLE */
     .theme-toggle { position: absolute; top: 20px; right: 20px; background: none; border: 1px solid var(--card-border); padding: 8px; border-radius: 8px; color: var(--text); cursor: pointer; }
@@ -138,7 +141,7 @@
     <!-- LEFT COLUMN: INPUTS -->
     <div class="card">
       
-      <!-- COPY BUTTON (Visibly Above Inputs) -->
+      <!-- COPY BUTTON -->
       <div class="copy-container">
         <button class="copy-btn" onclick="copySummary()">
           📋 Copy Vendoo Notes
@@ -223,36 +226,31 @@
     const cogs = parseFloat(document.getElementById('cogs').value) || 0;
     const mat = parseFloat(document.getElementById('material').value) || 0;
     const ship = parseFloat(document.getElementById('ship').value) || 0;
+    const target = parseFloat(document.getElementById('target').value) || 0;
+    const markup = 1 + ((parseFloat(document.getElementById('markup').value) || 0) / 100);
     
     const tbody = document.querySelector('#resultsTable tbody');
     tbody.innerHTML = '';
 
     PLATFORMS.forEach(p => {
-      let listPrice = 0;
-      let netProfit = 0;
-      let status = 'ok';
-
-      // Calculate List Price needed to hit Target
-      const target = parseFloat(document.getElementById('target').value) || 0;
-      const markup = 1 + ((parseFloat(document.getElementById('markup').value) || 0) / 100);
-      
       const costBase = target + cogs + mat + (p.ship ? ship : 0);
       let required = 0;
 
-      // Poshmark Logic
       if (p.name === 'Posh') {
-         // Complex Poshmark reverse math simplified for stability
          required = (costBase + 2.95) < 15 ? (costBase + 2.95) : (costBase / 0.8);
       } else {
          required = (costBase + p.flat) / (1 - p.fee);
       }
       
-      listPrice = roundPrice(required * markup, p.round);
+      const listPrice = roundPrice(required * markup, p.round);
       const fees = calcFees(p, listPrice);
-      netProfit = listPrice - fees - cogs - mat - (p.ship ? ship : 0);
-      status = netProfit >= target ? 'ok' : 'warn';
+      const netProfit = listPrice - fees - cogs - mat - (p.ship ? ship : 0);
+      
+      // Visual Health Check
+      let status = 'ok';
+      if (netProfit < 0) status = 'danger';
+      else if (netProfit < target) status = 'warn';
 
-      // Render Row
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.name}</td>
@@ -284,7 +282,6 @@
     const target = document.getElementById('target').value;
     const markup = document.getElementById('markup').value;
 
-    // New Format: Cost | Material | Ship | Target | Buffer
     const text = `Cost: $${cogs} | Mat: $${material} | Ship: $${ship} | Target: $${target} | Buffer: ${markup}%`;
 
     navigator.clipboard.writeText(text).then(() => {
@@ -294,8 +291,29 @@
     });
   }
 
+  // --- AUTO-SAVE LOGIC (LOCAL STORAGE) ---
+  const inputs = ['cogs', 'material', 'ship', 'target', 'markup'];
+
+  function loadSavedData() {
+    inputs.forEach(id => {
+      const saved = localStorage.getItem('vendoo_' + id);
+      if (saved) document.getElementById(id).value = saved;
+    });
+    compute();
+  }
+
+  function saveData(e) {
+    localStorage.setItem('vendoo_' + e.target.id, e.target.value);
+    compute();
+  }
+
   // --- INIT ---
-  document.querySelectorAll('input').forEach(i => i.addEventListener('input', compute));
+  window.addEventListener('DOMContentLoaded', () => {
+    loadSavedData(); // Load data on start
+    document.getElementById('cogs').focus(); // Smart Focus
+  });
+
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', saveData));
   
   // Render Fee Table
   const feeBody = document.getElementById('feeTable');
@@ -318,7 +336,6 @@
   }
   window.toggleShip = (i) => {
     PLATFORMS[i].ship = !PLATFORMS[i].ship;
-    // Re-render symbol
     document.getElementById('feeTable').rows[i].cells[3].innerText = PLATFORMS[i].ship ? '✅' : '❌';
     compute();
   }
@@ -331,9 +348,6 @@
     document.body.setAttribute('data-theme', theme);
     btnTheme.innerText = theme === 'dark' ? '🌙' : '☀️';
   };
-
-  compute();
 </script>
 </body>
 </html>
-
