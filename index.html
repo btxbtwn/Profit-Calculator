@@ -637,16 +637,17 @@
       <div class="card">
         <h2 class="card-title">Pricing Results</h2>
         <table id="results">
-          <thead>
-            <tr>
-              <th>Platform</th>
-              <th>Required Price</th>
-              <th>List (Markup)</th>
-              <th>Fees @ List</th>
-              <th>Net Profit @ List</th>
-              <th class="muted">Assumptions</th>
-            </tr>
-          </thead>
+         <thead>
+<tr>
+<th>Platform</th>
+<th>Required Price</th>
+<th>List (Markup)</th>
+<th>Revenue</th>
+<th>Fees @ List</th>
+<th>Net Profit</th>
+<th class="muted">Assumptions</th>
+</tr>
+</thead>
           <tbody></tbody>
         </table>
         <div class="table-note">
@@ -786,7 +787,9 @@
           const listRounded = roundingFn(requiredRounded * markup);
           const feeAtList = feesAtList(p, listRounded);
           const shipCostAtList = p.sellerPaysShip ? ship : 0;
-          const netAtList = listRounded - feeAtList - shipCostAtList - cogs - material;
+          const revenue = listRounded;
+          const netProfit = revenue - feeAtList - shipCostAtList - cogs - material;
+
 
           const tr = document.createElement('tr');
           tr.style.animationDelay = `${index * 0.05}s`;
