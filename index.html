@@ -793,14 +793,16 @@
 
           const tr = document.createElement('tr');
           tr.style.animationDelay = `${index * 0.05}s`;
-          tr.innerHTML = `
-            <td><span class="platform-name">${p.name}</span></td>
-            <td class="mono">${money(requiredRounded)}</td>
-            <td class="mono">${money(listRounded)}</td>
-            <td class="mono">${money(feeAtList)}</td>
-            <td class="mono ${netAtList >= target ? 'ok' : 'warn'}">${money(netAtList)}</td>
-            <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}</td>
+         tr.innerHTML = `
+          <td><span class="platform-name">${p.name}</span></td>
+          <td class="mono">${money(requiredRounded)}</td>
+          <td class="mono">${money(listRounded)}</td>
+          <td class="mono">${money(revenue)}</td>
+          <td class="mono">${money(feeAtList)}</td>
+          <td class="mono ${netProfit >= target ? 'ok' : 'warn'}">${money(netProfit)}</td>
+          <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}</td>
           `;
+
           tbody.appendChild(tr);
         });
 
