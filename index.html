@@ -642,7 +642,7 @@
 <th>Platform</th>
 <th>Required Price</th>
 <th>List (Markup)</th>
-<th>Revenue</th>
+<th>Total Cost</th>
 <th>Fees @ List</th>
 <th>Net Profit</th>
 <th class="muted">Assumptions</th>
@@ -775,6 +775,7 @@
         PLATFORMS.forEach((p, index) => {
           const roundingFn = getRoundingFor(p.name);
           const costBaseNoFee = target + cogs + material + (p.sellerPaysShip ? ship : 0);
+          const totalCost = cogs + material + (p.sellerPaysShip ? ship : 0);
 
           let requiredRounded;
           if (p.name === 'Poshmark') {
@@ -797,7 +798,7 @@
           <td><span class="platform-name">${p.name}</span></td>
           <td class="mono">${money(requiredRounded)}</td>
           <td class="mono">${money(listRounded)}</td>
-          <td class="mono">${money(revenue)}</td>
+          <td class="mono">${money(totalCost)}</td>
           <td class="mono">${money(feeAtList)}</td>
           <td class="mono ${netProfit >= target ? 'ok' : 'warn'}">${money(netProfit)}</td>
           <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}</td>
