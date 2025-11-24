@@ -1068,36 +1068,26 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
 
     // Load on startup
     window.addEventListener('DOMContentLoaded', () => {
-      saveIds.forEach(id => {
-        const saved = localStorage.getItem('vendoo_calc_' + id);
-        if (saved) document.getElementById(id).value = saved;
-      });
-      if (typeof compute === 'function') compute();
-// and/or
-renderFees();
+  saveIds.forEach(id => {
+    const saved = localStorage.getItem('vendoo_calc_' + id);
+    if (saved) document.getElementById(id).value = saved;
+  });
 
-    // Save on input
-    saveIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', (e) => {
-          localStorage.setItem('vendoo_calc_' + id, e.target.value);
-        });
-        PLATFORMS.forEach((p) => {
-  // Load markup
-  const savedMarkup = localStorage.getItem(`vendoo_markup_${p.name}`);
-  if (savedMarkup !== null) {
-    p.markupPct = parseFloat(savedMarkup);
-  }
-  // Load shipping discount
-  const savedDiscount = localStorage.getItem(`vendoo_shipdiscount_${p.name}`);
-  if (savedDiscount !== null) {
-    p.shippingDiscount = parseFloat(savedDiscount);
-  }
+  PLATFORMS.forEach((p) => {
+    const savedMarkup = localStorage.getItem(`vendoo_markup_${p.name}`);
+    if (savedMarkup !== null) {
+      p.markupPct = parseFloat(savedMarkup);
+    }
+    const savedDiscount = localStorage.getItem(`vendoo_shipdiscount_${p.name}`);
+    if (savedDiscount !== null) {
+      p.shippingDiscount = parseFloat(savedDiscount);
+    }
+  });
+
+  renderFees();
+  compute();
 });
 
-    renderFees();
-    compute();
   </script>
 </body>
 </html>
