@@ -760,9 +760,7 @@
       const material = parseFloat(document.getElementById('material').value) || 0;
       const ship     = parseFloat(document.getElementById('ship').value) || 0;
       const target   = parseFloat(document.getElementById('target').value) || 0;
-      const markup = 1 + (parseFloat(p.markupPct) / 100);
-const listRounded = roundingFn(requiredRounded * markup);
-
+      
       const tbody = document.querySelector('#results tbody');
       tbody.classList.add('updating');
 
@@ -781,7 +779,8 @@ const listRounded = roundingFn(requiredRounded * markup);
             const requiredRaw = requiredPriceGeneric(costBaseNoFee, p.feePct, p.promoPct, p.flatFee);
             requiredRounded = roundingFn(requiredRaw);
           }
-
+          const markup = 1 + (parseFloat(p.markupPct) / 100);
+          const listRounded = roundingFn(requiredRounded * markup);
           const listRounded = roundingFn(requiredRounded * markup);
           const feeAtList = feesAtList(p, listRounded);
           const shipCostAtList = p.sellerPaysShip ? ship : 0;
@@ -946,31 +945,36 @@ tr.appendChild(tdMarkup);
 
     
     function handleArrowClick(e) {
-      e.preventDefault();
-      const btn = e.currentTarget;
-      const platformIdx = parseInt(btn.dataset.platform);
-      const field = btn.dataset.field;
-      const direction = btn.dataset.direction;
-      
-      const platform = PLATFORMS[platformIdx];
-      
-      if (field === 'feePct' || field === 'promoPct') {
-        const increment = 0.005;
-        const currentVal = platform[field];
-        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
-        newVal = Math.max(0, Math.min(1, newVal));
-        platform[field] = newVal;
-      } else if (field === 'flatFee') {
-        const increment = 0.05;
-        const currentVal = platform[field];
-        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
-        newVal = Math.max(0, newVal);
-        platform[field] = newVal;
-      }
-      
-      renderFees();
-      compute();
-    }
+  e.preventDefault();
+  const btn = e.currentTarget;
+  const platformIdx = parseInt(btn.dataset.platform);
+  const field = btn.dataset.field;
+  const direction = btn.dataset.direction;
+  const platform = PLATFORMS[platformIdx];
+
+  if (field === 'feePct' || field === 'promoPct') {
+    const increment = 0.005;
+    const currentVal = platform[field];
+    let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+    newVal = Math.max(0, Math.min(1, newVal));
+    platform[field] = newVal;
+  } else if (field === 'flatFee') {
+    const increment = 0.05;
+    const currentVal = platform[field];
+    let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+    newVal = Math.max(0, newVal);
+    platform[field] = newVal;
+  } else if (field === 'markupPct') {
+    const increment = 1;
+    const currentVal = platform[field];
+    let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+    newVal = Math.max(0, Math.min(200, newVal));
+    platform[field] = newVal;
+  }
+
+  renderFees();
+  compute();
+}
     
     function handleSelectChange(e) {
       const select = e.target;
