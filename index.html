@@ -1073,7 +1073,8 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
         if (saved) document.getElementById(id).value = saved;
       });
       if (typeof compute === 'function') compute();
-    });
+// and/or
+renderFees();
 
     // Save on input
     saveIds.forEach(id => {
