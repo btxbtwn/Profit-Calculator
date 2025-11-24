@@ -664,6 +664,7 @@
     <th>Promo %</th>
     <th>Flat Fee $</th>
     <th>Markup %</th> <!-- This is the new line -->
+    <th>Discounted Ship $</th>
     <th>Seller Pays Ship?</th>
     <th>Default Rounding</th>
   </tr>
@@ -704,12 +705,12 @@
     initTheme();
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    const PLATFORMS = [
-  { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, flatFee: 0.45, markupPct: 50, sellerPaysShip: true,  rounding: '.99' },
-  { name: 'eBay',     feePct: 0.136, promoPct: 0.12, flatFee: 0.30, markupPct: 50, sellerPaysShip: true,  rounding: '.99' },
-  { name: 'Depop',    feePct: 0.033, promoPct: 0.08, flatFee: 0.45, markupPct: 50, sellerPaysShip: false, rounding: 'whole' },
-  { name: 'Poshmark', feePct: 0.20,  promoPct: 0.00, flatFee: 2.95, markupPct: 50, sellerPaysShip: false, rounding: 'whole' },
-  { name: 'Mercari',  feePct: 0.10,  promoPct: 0.00, flatFee: 0.00, markupPct: 50, sellerPaysShip: false, rounding: 'whole' },
+   const PLATFORMS = [
+  { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, flatFee: 0.45, markupPct: 50, sellerPaysShip: true,  rounding: '.99', shippingDiscount: 0 },
+  { name: 'eBay',     feePct: 0.136, promoPct: 0.12, flatFee: 0.30, markupPct: 50, sellerPaysShip: true,  rounding: '.99', shippingDiscount: 0 },
+  { name: 'Depop',    feePct: 0.033, promoPct: 0.08, flatFee: 0.45, markupPct: 50, sellerPaysShip: false, rounding: 'whole', shippingDiscount: 0 },
+  { name: 'Poshmark', feePct: 0.20,  promoPct: 0.00, flatFee: 2.95, markupPct: 50, sellerPaysShip: false, rounding: 'whole', shippingDiscount: 1.50 },
+  { name: 'Mercari',  feePct: 0.10,  promoPct: 0.00, flatFee: 0.00, markupPct: 50, sellerPaysShip: false, rounding: 'whole', shippingDiscount: 0 },
 ];
 
     const ceilDot99 = (x) => Math.max(0.99, Math.ceil(x) - 0.01);
@@ -782,7 +783,9 @@
           const markup = 1 + (parseFloat(p.markupPct) / 100);
           const listRounded = roundingFn(requiredRounded * markup);
           const feeAtList = feesAtList(p, listRounded);
-          const shipCostAtList = p.sellerPaysShip ? ship : 0;
+          const rawShip = p.sellerPaysShip ? ship : 0;
+          const shipDiscount = p.shippingDiscount || 0; // uses your platform field
+          const shipCostAtList = Math.max(0, rawShip - shipDiscount); // never negative
           const revenue = listRounded;
           const netProfit = revenue - feeAtList - shipCostAtList - cogs - material;
 
@@ -863,7 +866,18 @@ tdMarkup.innerHTML = `
 `;
 tr.appendChild(tdMarkup);
 
-        
+        const tdShipDiscount = document.createElement('td');
+tdShipDiscount.innerHTML = `
+  <div class="cell-with-arrows">
+    <span class="cell-value" contenteditable="true" data-platform="${index}" data-field="shippingDiscount">${p.shippingDiscount.toFixed(2)}</span>
+    <div class="arrow-buttons">
+      <button class="arrow-btn" data-platform="${index}" data-field="shippingDiscount" data-direction="up">▲</button>
+      <button class="arrow-btn" data-platform="${index}" data-field="shippingDiscount" data-direction="down">▼</button>
+    </div>
+  </div>
+`;
+tr.appendChild(tdShipDiscount);
+
         const tdShip = document.createElement('td');
         tdShip.innerHTML = `
           <select class="fee-select" data-platform="${index}" data-field="sellerPaysShip">
@@ -936,6 +950,12 @@ tr.appendChild(tdMarkup);
       platform[field] = numVal;
       cell.textContent = numVal.toFixed(1);
     }
+    else if (field === 'shippingDiscount') {
+  const numVal = parseFloat(value);
+  if (isNaN(numVal) || numVal < 0) throw new Error('Invalid shipping discount');
+  platform[field] = numVal;
+  cell.textContent = numVal.toFixed(2);
+}
     compute();
   } catch (err) {
     renderFees();
@@ -969,7 +989,14 @@ tr.appendChild(tdMarkup);
     let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
     newVal = Math.max(0, Math.min(200, newVal));
     platform[field] = newVal;
-  }
+  } else if (field === 'shippingDiscount') {
+  const increment = 0.10; // You can use "0.50" for bigger jumps, or "1" for whole dollars
+  const currentVal = platform[field];
+  let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+  newVal = Math.max(0, newVal); // Clamp at zero, can't be negative
+  platform[field] = newVal;
+}
+
 
   renderFees();
   compute();
