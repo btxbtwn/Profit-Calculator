@@ -590,7 +590,6 @@
 
     <div class="main-grid">
       <div class="card">
-        <!-- FEATURE: Copy Button (Moved Here) -->
         <div style="margin-bottom: 20px; text-align: center;">
           <button onclick="copySummary()" style="
             width: 100%;
@@ -627,10 +626,7 @@
             <label for="target">Target Profit</label>
             <input id="target" type="number" step="0.01" value="5.00" />
           </div>
-          <div class="input-group">
-            <label for="markup">Markup Percentage (%)</label>
-            <input id="markup" type="number" step="1" value="50" min="0" />
-          </div>
+          <!-- Removed global Markup input -->
         </div>
       </div>
 
@@ -667,6 +663,7 @@
             <th>Platform</th>
             <th>Fee %</th>
             <th>Promo %</th>
+            <th>Markup %</th> <!-- Added Markup Column -->
             <th>Flat Fee $</th>
             <th>Seller Pays Ship?</th>
             <th>Default Rounding</th>
@@ -707,12 +704,13 @@
     initTheme();
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
+    // Added markupPct to all platforms (default 0.50)
     const PLATFORMS = [
-      { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, flatFee: 0.45, sellerPaysShip: true,  rounding: '.99' },
-      { name: 'eBay',     feePct: 0.136, promoPct: 0.12, flatFee: 0.30, sellerPaysShip: true,  rounding: '.99' },
-      { name: 'Depop',    feePct: 0.033, promoPct: 0.08, flatFee: 0.45, sellerPaysShip: false, rounding: 'whole' },
-      { name: 'Poshmark', feePct: 0.20,  promoPct: 0.00, flatFee: 2.95, sellerPaysShip: false, rounding: 'whole' },
-      { name: 'Mercari',  feePct: 0.10,  promoPct: 0.00, flatFee: 0.00, sellerPaysShip: false, rounding: 'whole' },
+      { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, markupPct: 0.50, flatFee: 0.45, sellerPaysShip: true,  rounding: '.99' },
+      { name: 'eBay',     feePct: 0.136, promoPct: 0.12, markupPct: 0.50, flatFee: 0.30, sellerPaysShip: true,  rounding: '.99' },
+      { name: 'Depop',    feePct: 0.033, promoPct: 0.08, markupPct: 0.50, flatFee: 0.45, sellerPaysShip: false, rounding: 'whole' },
+      { name: 'Poshmark', feePct: 0.20,  promoPct: 0.00, markupPct: 0.50, flatFee: 2.95, sellerPaysShip: false, rounding: 'whole' },
+      { name: 'Mercari',  feePct: 0.10,  promoPct: 0.00, markupPct: 0.50, flatFee: 0.00, sellerPaysShip: false, rounding: 'whole' },
     ];
 
     const ceilDot99 = (x) => Math.max(0.99, Math.ceil(x) - 0.01);
@@ -763,8 +761,8 @@
       const material = parseFloat(document.getElementById('material').value) || 0;
       const ship     = parseFloat(document.getElementById('ship').value) || 0;
       const target   = parseFloat(document.getElementById('target').value) || 0;
-      const markupPct = parseFloat(document.getElementById('markup').value) || 0;
-      const markup   = 1 + (markupPct / 100);
+      
+      // Removed global markup variable fetch
 
       const tbody = document.querySelector('#results tbody');
       tbody.classList.add('updating');
@@ -776,6 +774,9 @@
           const roundingFn = getRoundingFor(p.name);
           const costBaseNoFee = target + cogs + material + (p.sellerPaysShip ? ship : 0);
           const totalCost = cogs + material + (p.sellerPaysShip ? ship : 0);
+
+          // Use platform specific markup
+          const markup = 1 + p.markupPct;
 
           let requiredRounded;
           if (p.name === 'Poshmark') {
@@ -820,6 +821,7 @@
         tdName.innerHTML = `<span class="platform-name">${p.name}</span>`;
         tr.appendChild(tdName);
         
+        // Fee %
         const tdFee = document.createElement('td');
         tdFee.innerHTML = `
           <div class="cell-with-arrows">
@@ -832,6 +834,7 @@
         `;
         tr.appendChild(tdFee);
         
+        // Promo %
         const tdPromo = document.createElement('td');
         tdPromo.innerHTML = `
           <div class="cell-with-arrows">
@@ -843,7 +846,21 @@
           </div>
         `;
         tr.appendChild(tdPromo);
+
+        // NEW: Markup %
+        const tdMarkup = document.createElement('td');
+        tdMarkup.innerHTML = `
+          <div class="cell-with-arrows">
+            <span class="cell-value" contenteditable="true" data-platform="${index}" data-field="markupPct">${(p.markupPct * 100).toFixed(1)}</span>
+            <div class="arrow-buttons">
+              <button class="arrow-btn" data-platform="${index}" data-field="markupPct" data-direction="up">▲</button>
+              <button class="arrow-btn" data-platform="${index}" data-field="markupPct" data-direction="down">▼</button>
+            </div>
+          </div>
+        `;
+        tr.appendChild(tdMarkup);
         
+        // Flat Fee
         const tdFlat = document.createElement('td');
         tdFlat.innerHTML = `
           <div class="cell-with-arrows">
@@ -911,9 +928,9 @@
       const platform = PLATFORMS[platformIdx];
       
       try {
-        if (field === 'feePct' || field === 'promoPct') {
+        if (field === 'feePct' || field === 'promoPct' || field === 'markupPct') { // Added markupPct
           const numVal = parseFloat(value);
-          if (isNaN(numVal) || numVal < 0 || numVal > 100) {
+          if (isNaN(numVal) || numVal < 0 || (field !== 'markupPct' && numVal > 100)) { // Allow markup > 100%
             throw new Error('Invalid percentage');
           }
           platform[field] = numVal / 100;
@@ -947,6 +964,12 @@
         const currentVal = platform[field];
         let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
         newVal = Math.max(0, Math.min(1, newVal));
+        platform[field] = newVal;
+      } else if (field === 'markupPct') { // Added markupPct logic
+        const increment = 0.01; // 1% increments
+        const currentVal = platform[field];
+        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = Math.max(0, newVal);
         platform[field] = newVal;
       } else if (field === 'flatFee') {
         const increment = 0.05;
@@ -982,14 +1005,8 @@
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(compute, 150);
     }
-
-    let debounceAvgCompTimer;
-    function debounceAvgComp() {
-      clearTimeout(debounceAvgCompTimer);
-      debounceAvgCompTimer = setTimeout(handleAvgCompChange, 150);
-    }
     
-    const inputs = ['cogs', 'material', 'ship', 'target', 'markup'];
+    const inputs = ['cogs', 'material', 'ship', 'target'];
     inputs.forEach(id => {
       const element = document.getElementById(id);
       element.addEventListener('input', debounceCompute);
@@ -1001,9 +1018,8 @@
       const material = document.getElementById('material').value;
       const ship = document.getElementById('ship').value;
       const target = document.getElementById('target').value;
-      const markup = document.getElementById('markup').value;
-
-      const text = `Cost: $${cogs} | Mat: $${material} | Ship: $${ship} | Target: $${target} | Buffer: ${markup}%`;
+      // Removed markup from summary copy since it varies per platform now
+      const text = `Cost: $${cogs} | Mat: $${material} | Ship: $${ship} | Target: $${target}`;
 
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.querySelector('button[onclick="copySummary()"]');
@@ -1014,7 +1030,7 @@
     }
 
     // --- FEATURE: Local Storage Auto-Save ---
-    const saveIds = ['cogs', 'material', 'ship', 'target', 'markup'];
+    const saveIds = ['cogs', 'material', 'ship', 'target']; // Removed markup
 
     // Load on startup
     window.addEventListener('DOMContentLoaded', () => {
