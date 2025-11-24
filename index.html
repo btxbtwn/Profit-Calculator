@@ -949,12 +949,14 @@ tr.appendChild(tdShipDiscount);
       if (isNaN(numVal) || numVal < 0 || numVal > 200) throw new Error('Invalid markup');
       platform[field] = numVal;
       cell.textContent = numVal.toFixed(1);
-    }
+    localStorage.setItem(`vendoo_markup_${platform.name}`, platform.markupPct);
+}
     else if (field === 'shippingDiscount') {
   const numVal = parseFloat(value);
   if (isNaN(numVal) || numVal < 0) throw new Error('Invalid shipping discount');
   platform[field] = numVal;
   cell.textContent = numVal.toFixed(2);
+localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDiscount);
 }
     compute();
   } catch (err) {
