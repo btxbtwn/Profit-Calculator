@@ -687,7 +687,6 @@
       document.body.setAttribute('data-theme', theme);
       const icon = document.getElementById('themeIcon');
       const label = document.getElementById('themeLabel');
-      
       if (theme === 'light') {
         icon.textContent = '☀️';
         label.textContent = 'Light';
@@ -705,7 +704,34 @@
     initTheme();
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // Add discountShip: 0 for all, except Poshmark: 1.5 as requested
+    // ---- BEGIN LOCAL STORAGE FEE SAVE/RESTORE ----
+    function feeStorageKey(idx, field) {
+      return `vendoo_calc_platform${idx}_${field}`;
+    }
+    function loadPlatformFields() {
+      PLATFORMS.forEach((p, idx) => {
+        ['feePct', 'promoPct', 'markupPct', 'flatFee', 'discountShip'].forEach(field => {
+          const val = localStorage.getItem(feeStorageKey(idx, field));
+          if (val !== null) {
+            p[field] = parseFloat(val);
+          }
+        });
+        let sellerShip = localStorage.getItem(feeStorageKey(idx, 'sellerPaysShip'));
+        if (sellerShip !== null) {
+          p.sellerPaysShip = sellerShip === 'true';
+        }
+        let rounding = localStorage.getItem(feeStorageKey(idx, 'rounding'));
+        if (rounding !== null) {
+          p.rounding = rounding;
+        }
+      });
+    }
+    function savePlatformField(idx, field, value) {
+      localStorage.setItem(feeStorageKey(idx, field), value);
+    }
+    // ---- END LOCAL STORAGE FEE SAVE/RESTORE ----
+
+    // Add discountShip: 0 for all, except Poshmark: 1.5
     const PLATFORMS = [
       { name: 'Etsy',     feePct: 0.095, promoPct: 0.00, markupPct: 0.50, flatFee: 0.45, sellerPaysShip: true,  discountShip: 0.00, rounding: '.99' },
       { name: 'eBay',     feePct: 0.136, promoPct: 0.12, markupPct: 0.50, flatFee: 0.30, sellerPaysShip: true,  discountShip: 0.00, rounding: '.99' },
@@ -767,20 +793,13 @@
 
       setTimeout(() => {
         tbody.innerHTML = '';
-
         PLATFORMS.forEach((p, index) => {
           const roundingFn = getRoundingFor(p.name);
-
-          // >>>> UPDATED: Ship discount logic <<<<
           const sellerShip = p.sellerPaysShip ? ship : 0;
-          const shipWithDiscount = Math.max(0, sellerShip - (p.discountShip || 0)); // Never negative
-
+          const shipWithDiscount = Math.max(0, sellerShip - (p.discountShip || 0));
           const costBaseNoFee = target + cogs + material + shipWithDiscount;
           const totalCost = cogs + material + shipWithDiscount;
-
-          // Use platform specific markup
           const markup = 1 + p.markupPct;
-
           let requiredRounded;
           if (p.name === 'Poshmark') {
             requiredRounded = requiredPricePosh(costBaseNoFee, roundingFn);
@@ -788,28 +807,24 @@
             const requiredRaw = requiredPriceGeneric(costBaseNoFee, p.feePct, p.promoPct, p.flatFee);
             requiredRounded = roundingFn(requiredRaw);
           }
-
           const listRounded = roundingFn(requiredRounded * markup);
           const feeAtList = feesAtList(p, listRounded);
           const shipCostAtList = shipWithDiscount;
           const revenue = listRounded;
           const netProfit = revenue - feeAtList - shipCostAtList - cogs - material;
-
-
           const tr = document.createElement('tr');
           tr.style.animationDelay = `${index * 0.05}s`;
-         tr.innerHTML = `
-          <td><span class="platform-name">${p.name}</span></td>
-          <td class="mono">${money(requiredRounded)}</td>
-          <td class="mono">${money(listRounded)}</td>
-          <td class="mono">${money(totalCost)}</td>
-          <td class="mono">${money(feeAtList)}</td>
-          <td class="mono ${netProfit >= target ? 'ok' : 'warn'}">${money(netProfit)}</td>
-          <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}${p.discountShip > 0 ? ` • Discount ship $${p.discountShip.toFixed(2)}` : ''}</td>
-          `;
+          tr.innerHTML = `
+            <td><span class="platform-name">${p.name}</span></td>
+            <td class="mono">${money(requiredRounded)}</td>
+            <td class="mono">${money(listRounded)}</td>
+            <td class="mono">${money(totalCost)}</td>
+            <td class="mono">${money(feeAtList)}</td>
+            <td class="mono ${netProfit >= target ? 'ok' : 'warn'}">${money(netProfit)}</td>
+            <td class="muted small">${(p.sellerPaysShip ? 'Seller pays ship' : 'Buyer pays ship')} • ${p.rounding === '.99' ? '.99' : 'Whole'}${p.discountShip > 0 ? ` • Discount ship $${p.discountShip.toFixed(2)}` : ''}</td>
+            `;
           tbody.appendChild(tr);
         });
-
         tbody.classList.remove('updating');
       }, 100);
     }
@@ -819,11 +834,10 @@
       feeBody.innerHTML = '';
       PLATFORMS.forEach((p, index) => {
         const tr = document.createElement('tr');
-        
         const tdName = document.createElement('td');
         tdName.innerHTML = `<span class="platform-name">${p.name}</span>`;
         tr.appendChild(tdName);
-        
+
         // Fee %
         const tdFee = document.createElement('td');
         tdFee.innerHTML = `
@@ -836,7 +850,7 @@
           </div>
         `;
         tr.appendChild(tdFee);
-        
+
         // Promo %
         const tdPromo = document.createElement('td');
         tdPromo.innerHTML = `
@@ -862,7 +876,7 @@
           </div>
         `;
         tr.appendChild(tdMarkup);
-        
+
         // Flat Fee
         const tdFlat = document.createElement('td');
         tdFlat.innerHTML = `
@@ -886,7 +900,7 @@
         `;
         tr.appendChild(tdShip);
 
-        // >>>> Discounted Ship <<<<
+        // Discounted Ship
         const tdDiscount = document.createElement('td');
         tdDiscount.innerHTML = `
           <div class="cell-with-arrows">
@@ -898,7 +912,7 @@
           </div>
         `;
         tr.appendChild(tdDiscount);
-        
+
         const tdRounding = document.createElement('td');
         tdRounding.innerHTML = `
           <select class="fee-select" data-platform="${index}" data-field="rounding">
@@ -907,7 +921,7 @@
           </select>
         `;
         tr.appendChild(tdRounding);
-        
+
         feeBody.appendChild(tr);
       });
       attachEditListeners();
@@ -924,16 +938,12 @@
           }
         });
       });
-      
+
       const arrowButtons = document.querySelectorAll('.arrow-btn');
-      arrowButtons.forEach(btn => {
-        btn.addEventListener('click', handleArrowClick);
-      });
-      
+      arrowButtons.forEach(btn => btn.addEventListener('click', handleArrowClick));
+
       const selects = document.querySelectorAll('.fee-select');
-      selects.forEach(select => {
-        select.addEventListener('change', handleSelectChange);
-      });
+      selects.forEach(select => select.addEventListener('change', handleSelectChange));
     }
 
     function handleCellEdit(e) {
@@ -943,27 +953,25 @@
       const value = cell.textContent.trim();
       const platform = PLATFORMS[platformIdx];
       try {
+        let numVal;
         if (field === 'feePct' || field === 'promoPct' || field === 'markupPct') {
-          const numVal = parseFloat(value);
-          if (isNaN(numVal) || numVal < 0 || (field !== 'markupPct' && numVal > 100)) {
-            throw new Error('Invalid percentage');
-          }
+          numVal = parseFloat(value);
+          if (isNaN(numVal) || numVal < 0 || (field !== 'markupPct' && numVal > 100)) throw new Error('Invalid percentage');
           platform[field] = numVal / 100;
           cell.textContent = numVal.toFixed(1);
         } else if (field === 'flatFee' || field === 'discountShip') {
-          const numVal = parseFloat(value);
-          if (isNaN(numVal) || numVal < 0) {
-            throw new Error('Invalid amount');
-          }
+          numVal = parseFloat(value);
+          if (isNaN(numVal) || numVal < 0) throw new Error('Invalid amount');
           platform[field] = numVal;
           cell.textContent = numVal.toFixed(2);
         }
+        savePlatformField(platformIdx, field, field.endsWith('Pct') ? platform[field] : platform[field]);
         compute();
       } catch (err) {
         renderFees();
       }
     }
-    
+
     function handleArrowClick(e) {
       e.preventDefault();
       const btn = e.currentTarget;
@@ -971,29 +979,28 @@
       const field = btn.dataset.field;
       const direction = btn.dataset.direction;
       const platform = PLATFORMS[platformIdx];
+      let newVal;
       if (field === 'feePct' || field === 'promoPct') {
         const increment = 0.005;
-        const currentVal = platform[field];
-        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = direction === 'up' ? platform[field] + increment : platform[field] - increment;
         newVal = Math.max(0, Math.min(1, newVal));
         platform[field] = newVal;
       } else if (field === 'markupPct') {
         const increment = 0.01;
-        const currentVal = platform[field];
-        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = direction === 'up' ? platform[field] + increment : platform[field] - increment;
         newVal = Math.max(0, newVal);
         platform[field] = newVal;
       } else if (field === 'flatFee' || field === 'discountShip') {
         const increment = 0.05;
-        const currentVal = platform[field];
-        let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+        newVal = direction === 'up' ? platform[field] + increment : platform[field] - increment;
         newVal = Math.max(0, newVal);
         platform[field] = newVal;
       }
+      savePlatformField(platformIdx, field, platform[field]);
       renderFees();
       compute();
     }
-    
+
     function handleSelectChange(e) {
       const select = e.target;
       const platformIdx = parseInt(select.dataset.platform);
@@ -1002,8 +1009,10 @@
       const platform = PLATFORMS[platformIdx];
       if (field === 'sellerPaysShip') {
         platform[field] = value === 'yes';
+        savePlatformField(platformIdx, field, platform[field]);
       } else if (field === 'rounding') {
         platform[field] = value;
+        savePlatformField(platformIdx, field, platform[field]);
       }
       compute();
     }
@@ -1013,7 +1022,7 @@
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(compute, 150);
     }
-    
+
     const inputs = ['cogs', 'material', 'ship', 'target'];
     inputs.forEach(id => {
       const element = document.getElementById(id);
@@ -1040,6 +1049,7 @@
         const saved = localStorage.getItem('vendoo_calc_' + id);
         if (saved) document.getElementById(id).value = saved;
       });
+      loadPlatformFields(); // <-- ADDED: restore platform fee fields
       if (typeof compute === 'function') compute();
     });
     saveIds.forEach(id => {
