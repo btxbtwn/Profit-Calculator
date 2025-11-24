@@ -986,17 +986,21 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
     newVal = Math.max(0, newVal);
     platform[field] = newVal;
   } else if (field === 'markupPct') {
-    const increment = 1;
-    const currentVal = platform[field];
-    let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
-    newVal = Math.max(0, Math.min(200, newVal));
-    platform[field] = newVal;
-  } else if (field === 'shippingDiscount') {
-  const increment = 0.10; // You can use "0.50" for bigger jumps, or "1" for whole dollars
+  const increment = 1;
+  const currentVal = platform[field];
+  let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
+  newVal = Math.max(0, Math.min(200, newVal));
+  platform[field] = newVal;
+  // Save to localStorage
+  localStorage.setItem(`vendoo_markup_${platform.name}`, platform.markupPct);
+  }else if (field === 'shippingDiscount') {
+  const increment = 0.10; // or 0.50 or 1 as you prefer
   const currentVal = platform[field];
   let newVal = direction === 'up' ? currentVal + increment : currentVal - increment;
   newVal = Math.max(0, newVal); // Clamp at zero, can't be negative
   platform[field] = newVal;
+  // Save to localStorage
+  localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDiscount);
 }
 
 
@@ -1078,8 +1082,18 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
         el.addEventListener('input', (e) => {
           localStorage.setItem('vendoo_calc_' + id, e.target.value);
         });
-      }
-    });
+        PLATFORMS.forEach((p) => {
+  // Load markup
+  const savedMarkup = localStorage.getItem(`vendoo_markup_${p.name}`);
+  if (savedMarkup !== null) {
+    p.markupPct = parseFloat(savedMarkup);
+  }
+  // Load shipping discount
+  const savedDiscount = localStorage.getItem(`vendoo_shipdiscount_${p.name}`);
+  if (savedDiscount !== null) {
+    p.shippingDiscount = parseFloat(savedDiscount);
+  }
+});
 
     renderFees();
     compute();
