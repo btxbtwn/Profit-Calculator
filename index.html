@@ -781,7 +781,6 @@
           }
           const markup = 1 + (parseFloat(p.markupPct) / 100);
           const listRounded = roundingFn(requiredRounded * markup);
-          const listRounded = roundingFn(requiredRounded * markup);
           const feeAtList = feesAtList(p, listRounded);
           const shipCostAtList = p.sellerPaysShip ? ship : 0;
           const revenue = listRounded;
