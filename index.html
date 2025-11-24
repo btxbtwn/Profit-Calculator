@@ -1068,11 +1068,13 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
 
     // Load on startup
     window.addEventListener('DOMContentLoaded', () => {
+  // Load main input fields
   saveIds.forEach(id => {
     const saved = localStorage.getItem('vendoo_calc_' + id);
     if (saved) document.getElementById(id).value = saved;
   });
 
+  // Load custom platform fee/markup/discount per platform ONCE
   PLATFORMS.forEach((p) => {
     const savedMarkup = localStorage.getItem(`vendoo_markup_${p.name}`);
     if (savedMarkup !== null) {
@@ -1083,6 +1085,21 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
       p.shippingDiscount = parseFloat(savedDiscount);
     }
   });
+
+  // Render by loaded values
+  renderFees();
+  compute();
+
+  // Attach main inputs auto-save logic
+  saveIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', (e) => {
+        localStorage.setItem('vendoo_calc_' + id, e.target.value);
+      });
+    }
+  });
+});
 
   renderFees();
   compute();
