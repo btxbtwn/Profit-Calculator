@@ -741,6 +741,7 @@
     localStorage.setItem(feeStorageKey(idx, field), value);
   }
 }
+
     // ---- END LOCAL STORAGE FEE SAVE/RESTORE ----
 
     // Add discountShip: 0 for all, except Poshmark: 1.5
@@ -959,30 +960,31 @@
     }
 
     function handleCellEdit(e) {
-      const cell = e.target;
-      const platformIdx = parseInt(cell.dataset.platform);
-      const field = cell.dataset.field;
-      const value = cell.textContent.trim();
-      const platform = PLATFORMS[platformIdx];
-      try {
-        let numVal;
-        if (field === 'feePct' || field === 'promoPct' || field === 'markupPct') {
-          numVal = parseFloat(value);
-          if (isNaN(numVal) || numVal < 0 || (field !== 'markupPct' && numVal > 100)) throw new Error('Invalid percentage');
-          platform[field] = numVal / 100;
-          cell.textContent = numVal.toFixed(1);
-        } else if (field === 'flatFee' || field === 'discountShip') {
-          numVal = parseFloat(value);
-          if (isNaN(numVal) || numVal < 0) throw new Error('Invalid amount');
-          platform[field] = numVal;
-          cell.textContent = numVal.toFixed(2);
-        }
-        savePlatformField(platformIdx, field, field.endsWith('Pct') ? platform[field] : platform[field]);
-        compute();
-      } catch (err) {
-        renderFees();
-      }
+  const cell = e.target;
+  const platformIdx = parseInt(cell.dataset.platform);
+  const field = cell.dataset.field;
+  const value = cell.textContent.trim();
+  const platform = PLATFORMS[platformIdx];
+  try {
+    let numVal;
+    if (field === 'feePct' || field === 'promoPct' || field === 'markupPct') {
+      numVal = parseFloat(value);
+      if (isNaN(numVal) || numVal < 0 || (field !== 'markupPct' && numVal > 100)) throw new Error('Invalid percentage');
+      platform[field] = numVal / 100;
+      cell.textContent = numVal.toFixed(1);
+      savePlatformField(platformIdx, field, platform[field]); // DO NOT change other platforms!
+    } else if (field === 'flatFee' || field === 'discountShip') {
+      numVal = parseFloat(value);
+      if (isNaN(numVal) || numVal < 0) throw new Error('Invalid amount');
+      platform[field] = numVal;
+      cell.textContent = numVal.toFixed(2);
+      savePlatformField(platformIdx, field, platform[field]);
     }
+    compute();
+  } catch (err) {
+    renderFees();
+  }
+}
 
     function handleArrowClick(e) {
       e.preventDefault();
