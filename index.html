@@ -709,26 +709,38 @@
       return `vendoo_calc_platform${idx}_${field}`;
     }
     function loadPlatformFields() {
-      PLATFORMS.forEach((p, idx) => {
-        ['feePct', 'promoPct', 'markupPct', 'flatFee', 'discountShip'].forEach(field => {
-          const val = localStorage.getItem(feeStorageKey(idx, field));
-          if (val !== null) {
-            p[field] = parseFloat(val);
-          }
-        });
-        let sellerShip = localStorage.getItem(feeStorageKey(idx, 'sellerPaysShip'));
-        if (sellerShip !== null) {
-          p.sellerPaysShip = sellerShip === 'true';
+  PLATFORMS.forEach((p, idx) => {
+    ['feePct', 'promoPct', 'markupPct', 'flatFee', 'discountShip'].forEach(field => {
+      const val = localStorage.getItem(feeStorageKey(idx, field));
+      if (val !== null) {
+        // Percent fields: divide by 100 to get decimal
+        if (field === "feePct" || field === "promoPct" || field === "markupPct") {
+          p[field] = parseFloat(val) / 100;
+        } else {
+          p[field] = parseFloat(val);
         }
-        let rounding = localStorage.getItem(feeStorageKey(idx, 'rounding'));
-        if (rounding !== null) {
-          p.rounding = rounding;
-        }
-      });
+      }
+    });
+    // Existing sellerPaysShip and rounding logic:
+    let sellerShip = localStorage.getItem(feeStorageKey(idx, 'sellerPaysShip'));
+    if (sellerShip !== null) {
+      p.sellerPaysShip = sellerShip === 'true';
     }
+    let rounding = localStorage.getItem(feeStorageKey(idx, 'rounding'));
+    if (rounding !== null) {
+      p.rounding = rounding;
+    }
+  });
+}
+
     function savePlatformField(idx, field, value) {
-      localStorage.setItem(feeStorageKey(idx, field), value);
-    }
+  // Save percentage fields as percent values (e.g., save 50, not 0.5)
+  if (field === "feePct" || field === "promoPct" || field === "markupPct") {
+    localStorage.setItem(feeStorageKey(idx, field), (value * 100).toString());
+  } else {
+    localStorage.setItem(feeStorageKey(idx, field), value);
+  }
+}
     // ---- END LOCAL STORAGE FEE SAVE/RESTORE ----
 
     // Add discountShip: 0 for all, except Poshmark: 1.5
