@@ -1029,21 +1029,23 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
 }
     
     function handleSelectChange(e) {
-      const select = e.target;
-      const platformIdx = parseInt(select.dataset.platform);
-      const field = select.dataset.field;
-      const value = select.value;
-      
-      const platform = PLATFORMS[platformIdx];
-      
-      if (field === 'sellerPaysShip') {
-        platform[field] = value === 'yes';
-      } else if (field === 'rounding') {
-        platform[field] = value;
-      }
-      
-      compute();
-    }
+  const select = e.target;
+  const platformIdx = parseInt(select.dataset.platform);
+  const field = select.dataset.field;
+  const value = select.value;
+  
+  const platform = PLATFORMS[platformIdx];
+  
+  if (field === 'sellerPaysShip') {
+    platform[field] = value === 'yes';
+    localStorage.setItem(`vendoo_sellerpaysship_${platform.name}`, platform.sellerPaysShip);
+  } else if (field === 'rounding') {
+    platform[field] = value;
+    localStorage.setItem(`vendoo_rounding_${platform.name}`, platform.rounding);
+  }
+  
+  compute();
+}
 
     let debounceTimer;
     function debounceCompute() {
@@ -1104,8 +1106,16 @@ localStorage.setItem(`vendoo_shipdiscount_${platform.name}`, platform.shippingDi
     if (savedDiscount !== null) {
       p.shippingDiscount = parseFloat(savedDiscount);
     }
-  });
-
+    const savedSellerPaysShip = localStorage.getItem(`vendoo_sellerpaysship_${p.name}`);
+  if (savedSellerPaysShip !== null) {
+    p.sellerPaysShip = savedSellerPaysShip === 'true';
+  }
+  const savedRounding = localStorage.getItem(`vendoo_rounding_${p.name}`);
+  if (savedRounding !== null) {
+    p.rounding = savedRounding;
+  }
+});
+    
   // Render by loaded values
   renderFees();
   compute();
