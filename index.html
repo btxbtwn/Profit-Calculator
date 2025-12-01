@@ -483,21 +483,23 @@
     }
 
     .fee-select {
-      width: 100%;
-      padding: 6px 28px 6px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      appearance: none;
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      background-size: 12px;
-      transition: all 0.3s ease;
-    }
+  width: 100%;
+  padding: 6px 32px 6px 10px; /* Increased right padding from 28px to 32px */
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none; /* Add this for Safari */
+  -moz-appearance: none; /* Add this for Firefox */
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* Changed from 8px to 10px */
+  background-size: 14px; /* Increased from 12px to 14px */
+  transition: all 0.3s ease;
+}
 
     [data-theme="dark"] .fee-select,
     body:not([data-theme]) .fee-select {
